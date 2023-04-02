@@ -8,10 +8,6 @@
 
 // #include "tcp_connection.h"
 
-
-
-
-
 std::ofstream logFile, keyboardFile;
 std::ostringstream logStream, keyboardStream;
 
