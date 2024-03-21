@@ -7,7 +7,6 @@
 #include <locale>
 #include <vector>
 #include <TlHelp32.h>
-#include <cstdlib> // for _wgetenv_s
 
 
 // #include "tcp_connection.h"
