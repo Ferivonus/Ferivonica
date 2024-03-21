@@ -128,6 +128,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="keyloger-in-cpp.cpp" />
+    <ClCompile Include="LodePNG.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LodePNG.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
