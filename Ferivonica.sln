@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Ferivonica", "Ferivonica\Ferivonica.vcxproj", "{527D34E9-ECCB-4F97-AE4A-32E5D51682E4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{527D34E9-ECCB-4F97-AE4A-32E5D51682E4}.Debug|x64.ActiveCfg = Debug|x64
+		{527D34E9-ECCB-4F97-AE4A-32E5D51682E4}.Debug|x64.Build.0 = Debug|x64
+		{527D34E9-ECCB-4F97-AE4A-32E5D51682E4}.Debug|x86.ActiveCfg = Debug|Win32
+		{527D34E9-ECCB-4F97-AE4A-32E5D51682E4}.Debug|x86.Build.0 = Debug|Win32
+		{527D34E9-ECCB-4F97-AE4A-32E5D51682E4}.Release|x64.ActiveCfg = Release|x64
+		{527D34E9-ECCB-4F97-AE4A-32E5D51682E4}.Release|x64.Build.0 = Release|x64
+		{527D34E9-ECCB-4F97-AE4A-32E5D51682E4}.Release|x86.ActiveCfg = Release|Win32
+		{527D34E9-ECCB-4F97-AE4A-32E5D51682E4}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A66BBF77-182F-4D46-BC07-0392502D5AC9}
+	EndGlobalSection
+EndGlobal
