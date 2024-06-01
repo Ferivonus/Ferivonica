@@ -83,8 +83,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)\External Libraries\GLFW\lib-vc2022;$(ProjectDir)\External Libraries\Vulkan\Lib;C:\Program Files\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(CoreLibraryDependencies);opencv_world470d.lib;vulkan-1.lib;glfw3.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);opencv_world470d.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -103,8 +103,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)\External Libraries\GLFW\lib-vc2022;$(ProjectDir)\External Libraries\Vulkan\Lib;C:\Program Files\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(CoreLibraryDependencies);opencv_world470.lib;vulkan-1.lib;glfw3.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);opencv_world470.lib;</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -119,8 +119,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);opencv_world470d.lib;vulkan-1.lib;glfw3.lib;vulkan-1.lib;glfw3.lib</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.280.0\Lib;C:\Users\fahre\Documents\Visual Studio 2022\Libraries\glfw-3.4.bin.WIN64\lib-vc2022;C:\Program Files\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);opencv_world470d.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -139,16 +139,20 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.280.0\Lib;C:\Users\fahre\Documents\Visual Studio 2022\Libraries\glfw-3.4.bin.WIN64\lib-vc2022;C:\Program Files\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(CoreLibraryDependencies);opencv_world470.lib;vulkan-1.lib;glfw3.lib;vulkan-1.lib;glfw3.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CoreLibraryDependencies);opencv_world470.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Ferivonica.cpp" />
     <ClCompile Include="LodePNG.cpp" />
+    <ClCompile Include="BrowserCookiesPaths.cpp" />
+    <ClCompile Include="ScreenshotSaver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LodePNG.h" />
+    <ClInclude Include="BrowserCookiesPaths.h" />
+    <ClInclude Include="ScreenshotSaver.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

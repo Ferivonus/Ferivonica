@@ -21,9 +21,21 @@
     <ClCompile Include="Ferivonica.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BrowserCookiesPaths.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ScreenshotSaver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LodePNG.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BrowserCookiesPaths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ScreenshotSaver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
